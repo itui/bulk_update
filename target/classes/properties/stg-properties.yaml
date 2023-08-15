@@ -1,0 +1,11 @@
+anypoint:
+  orgID: "067bbb51-5a06-4ab7-8028-837e3ac81e73"
+  envID: "e463f26d-afd8-401c-ace6-7f294270aaf4"
+  host: anypoint.mulesoft.com
+  port: "443"
+  path:
+    login: "/accounts/login"
+    cloudhub: "/cloudhub/api/v2/applications/"
+bulk:
+  size: "100"
+  delay: "3000"

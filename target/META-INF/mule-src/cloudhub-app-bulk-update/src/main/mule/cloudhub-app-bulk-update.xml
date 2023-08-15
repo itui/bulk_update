@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<global-property doc:name="Global Property" doc:id="e61f76ec-97c6-4bce-9b1c-d0812c0d250f" name="env" value="sandbox" />
+	<configuration-properties doc:name="Configuration properties" doc:id="4a2e21b1-a740-4822-bf82-18f1c33c82ba" file="properties/${env}-properties.yaml" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="0b765ef6-fa5b-4186-8b31-8adcbab43d56" basePath="/" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a8fa5961-d25b-43a0-b775-53779721aae9" >
+		<http:request-connection protocol="HTTPS" host="${anypoint.host}" port="${anypoint.port}"/>
+	</http:request-config>
+	<flow name="cloudhub-app-bulk-updateFlow" doc:id="8ecc0357-1384-4ab0-9ed9-3b1f84764be9" >
+		<http:listener doc:name="Listener" doc:id="7c773469-a8de-4980-8cd6-0f9ec3f604a3" config-ref="HTTP_Listener_config" path="/bulk/update" allowedMethods="GET"/>
+<!-- [STUDIO:"Logger"]		<logger level="INFO" doc:name="Logger" doc:id="780eea03-977c-400b-a456-5b65f701511b" category="support.bulk.update" message="About to start updating apps in CloudHub org_id: ${anypoint.orgID}, env_id: ${anypoint.envID}"/> [STUDIO] -->
+<!-- [STUDIO:"Request - get bearer token"]		<http:request method="POST" doc:name="Request - get bearer token" doc:id="acc69f91-33fb-490a-8bae-1bc80cf20852" config-ref="HTTP_Request_configuration" path="${anypoint.path.login}" target="bearerToken" targetValue="#[payload.access_token]" outputMimeType="application/json">
+			<http:body ><![CDATA[#[output application/json
+&#45;&#45;-
+{
+username: Mule::p('credentials.username'),
+password: Mule::p('credentials.password')
+
+}]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+&#45;&#45;-
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+		</http:request> [STUDIO] -->
+<!-- [STUDIO:"get_auto_generated_token"]		<logger level="DEBUG" doc:name="get_auto_generated_token" doc:id="ad1ca8f1-5db7-4e40-b7ad-8df60e142aff" message="#['Token is: ' ++ vars.bearerToken]" category="support.login"/> [STUDIO] -->
+		<set-variable value="#[attributes.headers.Authorization]" doc:name="bearerToken" doc:id="ff51c132-e50d-43de-a15e-cee7a54f9496" variableName="bearerToken"/>
+		<logger level="INFO" doc:name="Logger" doc:id="bb87c27a-134a-46f9-a610-2c7c50ff1a19" message="#[attributes.headers.token]"/>
+		<http:request method="GET" doc:name="Request - get app list" doc:id="5a2e7ddd-8584-4772-a1e7-a50debb1e89e" config-ref="HTTP_Request_configuration" path="${anypoint.path.cloudhub}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-ANYPNT-ENV-ID" : Mule::p('anypoint.envID'),
+	"Authorization" : "bearer " ++ vars.bearerToken,
+	"X-ANYPNT-ORG-ID" : Mule::p('anypoint.orgID')
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="b73cd32e-e62c-4818-a9c7-445ce1acb087" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Arrays
+output application/json	
+---
+payload map ((entry, index) -> (
+  	entry.domain )
+  	) divideBy Mule::p('bulk.size')
+  		]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="Logger" doc:id="736e7b50-8d17-4a0b-a098-348fa64cb9c4" category="support.bulk.split" message="The following apps are going to be updated in a loop using a batch size of ${bulk.size} applications with a delay of ${bulk.delay} ms per each cycle: #[payload]"/>
+		<foreach doc:name="For Each" doc:id="01e8b5b8-ac38-4c67-a544-56d2302506d5" >
+			<logger level="DEBUG" doc:name="Logger" doc:id="30e5f97a-0c34-432d-a20c-cd396c7829e5" category="support.bulk.upate" message="Updating apps: #[payload]" />
+			<http:request method="PUT" doc:name="Request - bulk update" doc:id="8e2cf3c9-26a5-47ee-9393-21cae8e3654f" config-ref="HTTP_Request_configuration" path="${anypoint.path.cloudhub}">
+				<http:body ><![CDATA[#[import * from dw::Runtime
+output application/json
+---
+{
+	"action": "UPDATE",
+	"domains": payload
+} wait Mule::p('bulk.delay')]]]></http:body>
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-ANYPNT-ENV-ID" : Mule::p('anypoint.envID'),
+	"Authorization" : "bearer " ++ vars.bearerToken,
+	"X-ANYPNT-ORG-ID" : Mule::p('anypoint.orgID')
+}]]]></http:headers>
+			</http:request>
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="aba935c2-09e5-4f53-8efc-1c3a546c9f14" message="Apps updated successfully in CloudHub org_id: ${anypoint.orgID}, env_id: ${anypoint.envID}" category="support.bulk.update"/>
+		<ee:transform doc:name="Transform Message" doc:id="5ab1f550-bad8-45d8-9b17-f248505da8c1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"result": "ok",
+	"updated-apps": payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
