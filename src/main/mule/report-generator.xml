@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:tracing="http://www.mulesoft.org/schema/mule/tracing"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:cloudhub-public-api="http://www.mulesoft.org/schema/mule/cloudhub-public-api" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/cloudhub-public-api http://www.mulesoft.org/schema/mule/cloudhub-public-api/current/mule-cloudhub-public-api.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/tracing http://www.mulesoft.org/schema/mule/tracing/current/mule-tracing.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+ 
+	<file:config name="File_Config" doc:name="File Config" doc:id="43a273da-6805-4731-99df-e3b3347ddd83" />
+	<flow name="report-generatorFlow" doc:id="1f29ad4f-7f37-472e-ae08-ca513abb4d3c" >
+		<http:listener doc:name="Listener" doc:id="d58fd67d-ed6a-4fce-ae16-417113a78862" path="/generateReport" config-ref="HTTP_Listener_config"/>
+		<async doc:name="Async" doc:id="e38da47e-5ea2-456f-a2ee-d67301f41e63" >
+			<file:list doc:name="List" doc:id="906166b7-4969-440e-8879-ba17591c8bc6" directoryPath="#[p('logs.downloadFolder')]"/>
+			<ee:transform doc:name="Transform Message" doc:id="9be7332a-5af9-4532-b73b-fe9c533abb10" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+(payload.attributes filter $.directory)..path]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<foreach doc:name="For Each" doc:id="88a04e81-748b-4209-88c1-ba5d4ff50cb7" >
+				<file:list doc:name="List" doc:id="19e59c93-febe-4d08-8d38-afa3f080feb9" config-ref="File_Config" directoryPath="#[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="3b1ea027-24c6-494b-be74-d5b6555636a7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.attributes..path]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="bf29469d-7c3e-439f-8c31-2de4f37bbd3c" message="#[payload]" />
+				<foreach doc:name="For Each" doc:id="922ab22f-44df-40b2-ab02-0530810554d7" collection="#[payload]">
+					<logger level="INFO" doc:name="Logger" doc:id="88adb7fb-86fd-4ca0-9fbe-701e20b0aa86" message="File  :  #[payload]  is in progress" />
+					<set-variable value="#[payload]" doc:name="Set vfilePath" doc:id="13dc8e86-55a4-4dca-8275-f350b6832d1e" variableName="vfilePath"/>
+					<file:read doc:name="Read" doc:id="47758a47-522c-437b-a790-6a35417e5933" path="#[payload]" />
+				<ee:transform doc:name="Set Start and End Position of each Line" doc:id="d59b301f-52cf-4399-9d0a-6d280b38af50">
+			<ee:message>
+			</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="startEndPositions"><![CDATA[%dw 2.0
+ 
+import * from dw::core::Strings
+output application/json
+ 
+---
+(payload splitBy  "[/opt/mule/mule-CURRENT/logs/mule-ah-sys-cp-use1-prod.log]:" ) -- [""]]]></ee:set-variable>
+				</ee:variables>
+		</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="af26ad95-2975-47d1-9ade-1edcd8f279a8" message="Positions Completed, Started Printing each line as json  " />
+				<ee:transform doc:name="Parse Each Line" doc:id="d1d3a0da-aab3-4b81-8030-937e282b04fd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/json
+ 
+
+fun getDateTime(d) = do {
+    var scanner = '\\d{2}-\\d{2} \d{2}:\d{2}:\d{2}.\d{3}'
+  ---
+   (now().year ++"-" ++ flatten(d scan(scanner))[0])  as LocalDateTime {format: "yyyy-MM-dd HH:mm:ss.SSS"} as DateTime {format: "yyyy-MM-dd HH:mm:ss.SSS"}
+}
+fun getCorrelationId(d) = do {
+    ((d splitBy  "event:")[1] splitBy  "]")[0]
+}
+fun getData(d) = do  {
+  var corrlationId = getCorrelationId(d)
+  ---
+  read (trim(substring(d, find(d,corrlationId)[0] + sizeOf(corrlationId)+2, sizeOf(d) )) , 'application/json')
+}
+---
+ (vars.startEndPositions filter ($ contains '{"sourceSystem"') ) map {
+ 
+   "logTimeStamp" : getDateTime($) ,
+   "correlationId" : getCorrelationId($),
+   "jsonPayload" : write(getData($), 'application/json'),
+   "sourceSystem" : getData($).sourceSystem,
+   "sourceSystemCustomerId" : getData($).sourceSystemCustomerID,
+   "sourceSystemTimestamp" : getData($).sourceSystemTimestamp
+ 
+
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+				</ee:variables>
+			</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="2df0bb4d-9494-4535-8294-dc24b057f09a" message="#[payload]" />
+<!-- [STUDIO:"Update logTimeStamp"]					<ee:transform doc:name="Update logTimeStamp" doc:id="66c635e5-5c5d-4816-a9eb-37fb9b58d3ed" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::util::Values
+output application/json
+&#45;&#45;-
+payload map ((item, index) -> item  update {
+    case .jsonPayload -> write(item.jsonPayload, 'application/json')
+})]]></ee:set-payload>
+						</ee:message>
+					</ee:transform> [STUDIO] -->
+					<try doc:name="Try" doc:id="a2136f4c-715b-41ae-b675-95b78976e609" >
+<!-- [STUDIO:"Bulk insert to [dbo].[LogData]"]						<db:bulk-insert doc:name="Bulk insert to [dbo].[LogData]" doc:id="a5e80fc5-d693-4901-8cc9-30de5ac81936" config-ref="CP_Database_Config">
+						<db:sql><![CDATA[INSERT INTO [dbo].[LogData] (logTimeStamp,correlationId,sourceSystem,sourceSystemCustomerId,sourceSystemTimestamp,jsonPayload) VALUES (:logTimeStamp,:correlationId,:sourceSystem,:sourceSystemCustomerId,:sourceSystemTimestamp,:jsonPayload)]]></db:sql>
+					</db:bulk-insert> [STUDIO] -->
+						<error-handler >
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2a483aa1-dd4c-4c7b-98eb-4a6126fdeb58" >
+								<logger level="INFO" doc:name="Logger" doc:id="cba489c0-b836-4bdd-b7fc-63cc68b1e5a5" message='#["error occured for thr file path " ++ vars.vfilePath ++ " while inserting data to database"]'/>
+							</on-error-continue>
+						</error-handler>
+					</try>
+					<logger level="INFO" doc:name="Logger" doc:id="a0a75d69-5c03-42f1-b233-324c57374e93" message="#[payload]"/>
+			</foreach>
+			</foreach>
+		</async>
+	</flow>
+</mule>

@@ -1,0 +1,25 @@
+anypoint:
+  cloudhub:
+    username: "cloudtesting"
+    password: "cloudtesting"
+    host: "anypoint.mulesoft.com"
+    port: "443"
+    basePath: "/cloudhub/api"
+    protocol: "HTTPS"
+    X-ANYPNT-ENV-ID: "2c5ec9ef-4135-47ec-b4a4-2b9bbea8737b"
+    X-ANYPNT-ORG-ID: "a0f69e53-ff04-4945-89b2-a3c9c3787775"
+    anypointDomain: "Sandbox"
+    fileDir: "/Users/nebihaamir/Desktop/logs"
+    
+logs:
+  downloadFolder: "/Users/nebihaamir/Desktop/logs/download"  
+    
+db:
+  cp:
+    host: "sql-adapt-dev-eus2-resupply-databases.database.windows.net"
+    instance: "ReSupply"
+    port: "1433"
+    user: "cp_app"
+    password: "![tKFNxE015NGqae56UH/hfQ==]"     
+  
+ 

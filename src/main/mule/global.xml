@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:cloudhub-public-api="http://www.mulesoft.org/schema/mule/cloudhub-public-api"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/cloudhub-public-api http://www.mulesoft.org/schema/mule/cloudhub-public-api/current/mule-cloudhub-public-api.xsd">
+	
+	<global-property doc:name="Global Property" doc:id="1feb751f-d7dd-4bde-bd02-259cee93d431" name="mule.env" value="${env}" />
+	<configuration-properties doc:name="Configuration properties" doc:id="c6e55869-76ff-4042-a028-daa572b168e0" file="properties/${mule.env}-api-properties.yaml" doc:description="Loading Env properties files"/>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="4ab1c83e-2553-4333-8446-7bf1a62eefc4" file="properties/${mule.env}-api-properties.yaml" key="${encryption.key}" />
+		<global-property doc:name="Global Property" doc:id="8356921a-d0e0-4819-8dd9-6325a475c591" name="env" value="local" />
+	<global-property doc:name="Global Property" doc:id="684d0072-1684-421d-8727-6360cc810ef0" name="encryption.key" value="1234567891011121" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="4c51d515-d1e6-4bd6-8090-dba2f5f8068d" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<cloudhub-public-api:config name="Cloudhub_Public_API_Config" doc:name="Cloudhub Public API Config" doc:id="250e4aa0–3c5f-41ba-83f4–0eec7812182c" property_username="${secure::anypoint.cloudhub.username}" property_password="${secure::anypoint.cloudhub.password}" property_host="${anypoint.cloudhub.host}" property_port="${anypoint.cloudhub.port}" property_protocol="${anypoint.cloudhub.protocol}" property_basePath="${anypoint.cloudhub.basePath}"/>
+	
+	<http:request-config name="HTTP_Request_configuration_cloudhub" doc:name="HTTP Request configuration" doc:id="4a6d1f34–5c62–4a14–9bfc-8c5ef6098163" basePath="/cloudhub/api/v2/applications" >
+	<http:request-connection protocol="HTTPS" host="${anypoint.cloudhub.host}" port="${anypoint.cloudhub.port}" >
+ <http:authentication >
+ <http:basic-authentication username="${secure::anypoint.cloudhub.username}" password="${secure::anypoint.cloudhub.password}" />
+ </http:authentication>
+ </http:request-connection>
+ </http:request-config>
+ 
+ 	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="3e9a1f2f-6b9e-4cd2-9196-99f2d0b00413" responseTimeout="60000">
+		<http:request-connection host="anypoint.mulesoft.com" protocol="HTTPS" port="443" connectionIdleTimeout="60000"/>
+	</http:request-config>
+<!-- 	<db:config name="CP_Database_Config" doc:name="Database Config" doc:id="5054ad3b-d1fc-40a8-aa76-9ec268360469">
+        <db:mssql-connection host="${db.cp.host}" port="${db.cp.port}" user="${db.cp.user}" password="${secure::db.cp.password}" databaseName="${db.cp.instance}" />
+    </db:config>
+ -->
+</mule>
