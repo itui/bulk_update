@@ -1,0 +1,130 @@
+{
+	"info": {
+		"_postman_id": "1d42adba-e370-4a08-894d-37e5deb0933d",
+		"name": "logs-file-save",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8081/download?envID=93ee115b-a9cb-4838-8711-352e922c0d39&appURL=ah-sys-cp-use1-prod.us-e1.cloudhub.io&year=2023&month=05&day=31&token=3b2b6dbc-8d25-49be-9dda-628325f05fcf",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/download?envID=93ee115b-a9cb-4838-8711-352e922c0d39&appURL=ah-sys-cp-use1-prod.us-e1.cloudhub.io&year=2023&month=05&day=31&token=3b2b6dbc-8d25-49be-9dda-628325f05fcf",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"download"
+					],
+					"query": [
+						{
+							"key": "envID",
+							"value": "93ee115b-a9cb-4838-8711-352e922c0d39"
+						},
+						{
+							"key": "appURL",
+							"value": "ah-sys-cp-use1-prod.us-e1.cloudhub.io"
+						},
+						{
+							"key": "year",
+							"value": "2023"
+						},
+						{
+							"key": "month",
+							"value": "05"
+						},
+						{
+							"key": "day",
+							"value": "31"
+						},
+						{
+							"key": "token",
+							"value": "3b2b6dbc-8d25-49be-9dda-628325f05fcf"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8081/download?envID=93ee115b-a9cb-4838-8711-352e922c0d39&appURL=ah-sys-cp-use1-prod.us-e1.cloudhub.io&startDate=2023-05-21&endDate=2023-06-02&token=24b28e51-c936-42fd-b66b-1a450347ae2a",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/download?envID=93ee115b-a9cb-4838-8711-352e922c0d39&appURL=ah-sys-cp-use1-prod.us-e1.cloudhub.io&startDate=2023-05-21&endDate=2023-06-02&token=24b28e51-c936-42fd-b66b-1a450347ae2a",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"download"
+					],
+					"query": [
+						{
+							"key": "envID",
+							"value": "93ee115b-a9cb-4838-8711-352e922c0d39"
+						},
+						{
+							"key": "appURL",
+							"value": "ah-sys-cp-use1-prod.us-e1.cloudhub.io"
+						},
+						{
+							"key": "startDate",
+							"value": "2023-05-21"
+						},
+						{
+							"key": "endDate",
+							"value": "2023-06-02"
+						},
+						{
+							"key": "token",
+							"value": "24b28e51-c936-42fd-b66b-1a450347ae2a"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "https://anypoint.mulesoft.com/accounts/login",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Cookie",
+						"value": "XSRF-TOKEN=VAHCTUGh-ppeqEQzHvuWItRS2y09EUtcd6IY; _csrf=129BygR2k8GCCfEkcFQzGnZE; mulesoft.sess=eyJpZCI6IjBGNG9mb3pSUW4zYkZFV3laSFBHYjFEMTQxa0M4OW8zIiwicGFzc3BvcnQiOnsidXNlciI6eyJ1c2VyX2lkIjoiOGQzMDNhY2YtMzczOC00YTRjLTk0N2ItNDZlNGFjOWYyYzkyIn19LCJlbGV2YXRlZCI6eyJleHBpcmVzX2F0IjoxNjg1NzA2NDYxfX0=; mulesoft.sess.sig=lhZYPXViV_6_jvSDGCtC7klNDCo",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\n\"username\":\"Mule-admin-devops\",\n\"password\":\"WelcomeMULE@1\"\n\n \n\n}"
+				},
+				"url": {
+					"raw": "https://anypoint.mulesoft.com/accounts/login",
+					"protocol": "https",
+					"host": [
+						"anypoint",
+						"mulesoft",
+						"com"
+					],
+					"path": [
+						"accounts",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
